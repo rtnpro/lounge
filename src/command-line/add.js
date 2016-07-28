@@ -4,23 +4,27 @@ var program = require("commander");
 var Helper = require("../helper");
 
 program
-	.command("add <name>")
+	.command("add <name> [<password>]")
 	.description("Add a new user")
-	.action(function(name/* , password */) {
+	.action(function(name, password) {
 		var manager = new ClientManager();
 		var users = manager.getUsers();
 		if (users.indexOf(name) !== -1) {
 			log.error("User '" + name + "' already exists.");
 			return;
 		}
-		require("read")({
-			prompt: "[thelounge] Enter password: ",
-			silent: true
-		}, function(err, password) {
-			if (!err) {
-				add(manager, name, password);
-			}
-		});
+    if (password) {
+      add(manager, name, password);
+    } else {
+      require("read")({
+        prompt: "[thelounge] Enter password: ",
+        silent: true
+      }, function(err, password) {
+        if (!err) {
+          add(manager, name, password);
+        }
+      });
+    }
 	});
 
 function add(manager, name, password) {
