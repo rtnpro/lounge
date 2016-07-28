@@ -9,9 +9,11 @@ var express = require("express");
 var fs = require("fs");
 var io = require("socket.io");
 var dns = require("dns");
+var redis = require('redis');
 var Helper = require("./helper");
 
 var manager = null;
+var redisClient = redis.createClient();
 
 module.exports = function() {
 	manager = new ClientManager();
@@ -239,27 +241,52 @@ function auth(data) {
 		}
 	} else {
 		var success = false;
-		_.each(manager.clients, function(client) {
-			if (data.token) {
-				if (data.token === client.config.token) {
-					success = true;
-				}
-			} else if (client.config.user === data.user) {
-				if (bcrypt.compareSync(data.password || "", client.config.password)) {
-					success = true;
-				}
-			}
-			if (success) {
-				if (Helper.config.webirc !== null && !client.config["ip"]) {
-					reverseDnsLookup(socket, client);
-				} else {
-					init(socket, client);
-				}
-				return false;
-			}
-		});
-		if (!success) {
-			socket.emit("auth", {success: success});
-		}
+    var sessionId = null;
+    _.each(socket.client.request.headers.cookie.split(';'), function(item) {
+      item = item.trim();
+      var tokens = item.split('=');
+      if (tokens[0] === 'session')
+        sessionId = tokens[1];
+    });
+
+    function _auth (session) {
+      _.each(manager.clients, function(client) {
+        if (session && session.username === client.config.user) {
+          success = true;
+        }
+        if (data.token) {
+          if (data.token === client.config.token) {
+            success = true;
+          }
+        } else if (client.config.user === data.user) {
+          if (bcrypt.compareSync(data.password || "", client.config.password)) {
+            success = true;
+          }
+        }
+        if (success) {
+          if (Helper.config.webirc !== null && !client.config["ip"]) {
+            reverseDnsLookup(socket, client);
+          } else {
+            init(socket, client);
+          }
+          return false;
+        }
+      });
+      if (!success) {
+        socket.emit("auth", {success: success});
+      }
+    }
+    if (sessionId) {
+      redisClient.get('session:' + sessionId, function(err, res) {
+        if (err || !res)
+          _auth();
+        else {
+          var session = JSON.parse(res);
+          _auth(session);
+        }
+      });
+    } else {
+      _auth();
+    }
 	}
 }
