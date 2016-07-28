@@ -13,7 +13,6 @@ var redis = require('redis');
 var Helper = require("./helper");
 
 var manager = null;
-var redisClient = redis.createClient();
 
 module.exports = function() {
 	manager = new ClientManager();
@@ -277,13 +276,15 @@ function auth(data) {
       }
     }
     if (sessionId) {
-      redisClient.get('session:' + sessionId, function(err, res) {
+      var client = redis.createClient();
+      client.get('session:' + sessionId, function(err, res) {
         if (err || !res)
           _auth();
         else {
           var session = JSON.parse(res);
           _auth(session);
         }
+        client.quit();
       });
     } else {
       _auth();
