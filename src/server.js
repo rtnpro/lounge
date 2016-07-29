@@ -115,6 +115,7 @@ function index(req, res, next) {
 
 function init(socket, client) {
 	if (!client) {
+    auth({}, socket);
 		socket.emit("auth", {success: true});
 		socket.on("auth", auth);
 	} else {
@@ -224,8 +225,8 @@ function reverseDnsLookup(socket, client) {
 	});
 }
 
-function auth(data) {
-	var socket = this;
+function auth(data, socket) {
+	var socket = this || socket;
 	if (Helper.config.public) {
 		var client = new Client(manager);
 		manager.clients.push(client);
