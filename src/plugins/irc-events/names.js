@@ -14,6 +14,8 @@ module.exports = function(irc, network) {
 
 			// irc-framework sets characater mode, but lounge works with symbols
 			if (user.mode) {
+        console.log(network.prefixLookup);
+        network.prefixLookup = network.prefixLookup || {};
 				user.mode = network.prefixLookup[user.mode];
 			}
 
