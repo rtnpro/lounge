@@ -49,6 +49,42 @@ $(function() {
 	});
 
 	var favicon = $("#favicon");
+  var networkSelected = null;
+  var channelSelected = null;
+
+  Path.map('#/network/:network').to(function() {
+    networkSelected = this.params.network;
+    channelSelected = null;
+    selectChannel();
+  });
+  Path.map('#/network/:network/channel/:channel').to(function() {
+    networkSelected = this.params.network;
+    channelSelected = this.params.channel;
+    selectChannel();
+  });
+  Path.listen();
+
+  function selectChannel() {
+    if (networkSelected) {
+      var network = sidebar.find(".network[data-title='" + networkSelected + "']").first();
+      var chan = null;
+      if (channelSelected) {
+        if (channelSelected.startsWith('#')) {
+          chan = network.find(".chan.channel[data-title='" + channelSelected + "']");
+        } else {
+          chan = network.find(".chan.query[data-title='" + channelSelected + "']");
+        }
+      } else {
+        chan = network.find(".chan.lobby [data-title='" + networkSelected + "']");
+      }
+      chan = chan.first();
+      if (chan) {
+        chan.first().click().trigger('click');
+        return true;
+      }
+    }
+    return false;
+  }
 
 	function render(name, data) {
 		return Handlebars.templates[name](data);
@@ -155,7 +191,7 @@ $(function() {
 
 		var id = data.active;
 		var target = sidebar.find("[data-id='" + id + "']").trigger("click");
-		if (target.length === 0) {
+    if (!selectChannel() && target.length === 0) {
 			var first = sidebar.find(".chan")
 				.eq(0)
 				.trigger("click");
@@ -371,10 +407,12 @@ $(function() {
 
 	socket.on("network", function(data) {
 		renderNetworks(data);
+    if (!selectChannel()) {
 
-		sidebar.find(".chan")
-			.last()
-			.trigger("click");
+      sidebar.find(".chan")
+        .last()
+        .trigger("click");
+    }
 
 		$("#connect")
 			.find(".btn")
