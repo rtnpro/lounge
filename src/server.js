@@ -122,18 +122,21 @@ function init(socket, client) {
 		socket.on(
 			"input",
 			function(data) {
+        console.log('INPUT', data);
 				client.input(data);
 			}
 		);
 		socket.on(
 			"more",
 			function(data) {
+        console.log('MORE', data);
 				client.more(data);
 			}
 		);
 		socket.on(
 			"conn",
 			function(data) {
+        console.log('CONN', data);
 				// prevent people from overriding webirc settings
 				data.ip = null;
 				data.hostname = null;
@@ -187,18 +190,21 @@ function init(socket, client) {
 		socket.on(
 			"open",
 			function(data) {
+        console.log('OPEN', data);
 				client.open(data);
 			}
 		);
 		socket.on(
 			"sort",
 			function(data) {
+        console.log('SORT', data);
 				client.sort(data);
 			}
 		);
 		socket.on(
 			"names",
 			function(data) {
+        console.log('NAMES', data);
 				client.names(data);
 			}
 		);
